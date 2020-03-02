@@ -1,17 +1,20 @@
 import React from 'react';
 import './App.css';
+import ClipboardJS from 'clipboard'
 class App extends React.Component{
   constructor(props) {
     super(props)
     this.state = {
-      fundList: ['001740','005939','400015','519674','320007','001645','000522'],
       fundData: JSON.parse(localStorage.getItem('fund')) || [],
       showList: [],
       today: 0,
-      all:0
+      all: 0,
+      addItem: {},
+      inputJson:''
     }
   }
   componentDidMount() {
+    new ClipboardJS('#saveJSON')
     this.getFundDatas()
     setInterval(() => {
       this.getFundDatas()
@@ -21,8 +24,8 @@ class App extends React.Component{
     this.setState({
       showList:[]
     })
-    this.state.fundList.forEach((item) => {
-      this.jsonp(`http://fundgz.1234567.com.cn/js/${item}.js?rt=${new Date().getTime()}`)
+    this.state.fundData.forEach(item => {
+      this.jsonp(`http://fundgz.1234567.com.cn/js/${item.id}.js?rt=${new Date().getTime()}`)
     })
   }
   jsonp(url, jsonpCallback = 'jsonpgz') {
@@ -49,6 +52,48 @@ class App extends React.Component{
     }
     document.body.appendChild(script)
   }
+  ondelete(code) {
+    const result = window.confirm("是否要删除该基金")
+    if (result) {
+      const { fundData,showList } = this.state
+      const newList = fundData.filter(item => item.id !== code)
+      let _showList = showList.filter(item=>item.fundcode!==code)
+      this.setState({
+        fundData: newList,
+        showList:_showList
+      }, () => {
+        this.saveToLocalStorage()
+      })
+    }
+  }
+  onAdd() {
+    const { fundData, addItem } = this.state
+    if (addItem.id) {
+      fundData.push(addItem)
+    }
+    this.setState({
+      fundData,
+      addItem: {}
+    }, () => {
+      this.getFundDatas()
+      this.saveToLocalStorage()
+    })
+  }
+  changeAddItem(e, type) {
+    const { addItem } = this.state 
+    addItem[type] = e.target.value
+    this.setState({
+      addItem
+    })
+  }
+  /**
+   * 保存到localStorage
+   */
+  saveToLocalStorage(data) {
+    const { fundData } = this.state
+    const json = JSON.stringify(fundData)
+    localStorage.setItem('fund',data||json)
+  }
   changeDate(e,code,type) {
     let { fundData } = this.state
     const value = fundData.find((item => item.id === code))
@@ -61,16 +106,29 @@ class App extends React.Component{
       fundData
     })
     const data = JSON.stringify(fundData)
-    localStorage.setItem('fund',data)
+    this.saveToLocalStorage(data)
+  }
+  /**
+   * 导入json
+   */
+  importJson() {
+    const { inputJson } = this.state
+    const jsonData = JSON.parse(JSON.parse(inputJson))
+    this.setState({
+      fundData:jsonData
+    }, () => {
+      this.getFundDatas()
+      this.saveToLocalStorage()
+    })
   }
   render() {
-    const { showList, fundData } = this.state
+    const { showList, fundData,addItem,inputJson } = this.state
     let _today = 0
     let _all = 0
     let _allMoney = 0
     const _showList = showList.map((item) => {
       const isRed = item.dwjz <= item.gsz ? 'red' : 'green'
-      const own = fundData.find((item2) => item2.id === item.fundcode)
+      const own = fundData.find((item2) => item2.id === item.fundcode) || {num:0,money:0}
       const today = (item.dwjz * own.num * item.gszzl / 100).toFixed(2)
       const all = (item.gsz * own.num - own.money).toFixed(2)
       _today += Number(today)
@@ -88,13 +146,18 @@ class App extends React.Component{
           <td className={today>0?'red':'green'}>￥{today}</td>
           <td className={all>0?'red':'green'}>￥{all}</td>
           <td>{item.gztime}</td>
+          <td onClick={()=>this.ondelete(item.fundcode)}>删除</td>
         </tr>
       )
     })
     return(
       <div className="App">
-        <button onClick={() => this.getFundDatas()}>刷新</button>
-        <hr/>
+        <div className='add'>
+          <input type="text" placeholder='基金代码' value={addItem.id||''} onChange={e=>this.changeAddItem(e,'id')}/>
+          <input type="text" placeholder='持仓份额' value={addItem.num||''} onChange={e=>this.changeAddItem(e,'num')}/>
+          <input type="text" placeholder='总投入' value={addItem.money||''} onChange={e=>this.changeAddItem(e,'money')}/>
+          <div className='btn blue' onClick={()=>this.onAdd()}>新增</div>
+        </div>
         <table border="1">
           <thead>
             <tr>
@@ -108,6 +171,7 @@ class App extends React.Component{
               <th>今日收益</th>
               <th>总收益</th>
               <th>更新时间</th>
+              <th>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -120,9 +184,18 @@ class App extends React.Component{
               <th className={_today > 0 ? 'red' : 'green'}>￥{_today.toFixed(2)}</th>
               <th className={_all > 0 ? 'red' : 'green'}>￥{_all.toFixed(2)}</th>
               <th></th>
+              <th></th>
             </tr>
           </tfoot>
         </table>
+        <div className='Import'>
+          <input type="text" placeholder='输入历史数据' value={inputJson} onChange={e => this.setState({inputJson:e.target.value})}/>
+          <div className='btn blue' onClick={() => this.importJson()}>导入json</div>
+        </div>
+        <div id='saveJSON' className='btn' data-clipboard-text={JSON.stringify(localStorage.getItem('fund'))} onClick={()=>alert('复制成功')}>
+          保存数据
+        </div>
+        <div className='btn blue'  onClick={() => this.getFundDatas()}>刷新</div>
       </div>
     );
   }
