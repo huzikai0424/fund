@@ -13,8 +13,14 @@ class App extends React.Component{
   }
   componentDidMount() {
     this.getFundDatas()
+    setInterval(() => {
+      this.getFundDatas()
+    },2*60*1000)
   }
   getFundDatas() {
+    this.setState({
+      showList:[]
+    })
     this.state.fundList.forEach((item) => {
       this.jsonp(`http://fundgz.1234567.com.cn/js/${item}.js?rt=${new Date().getTime()}`)
     })
@@ -87,6 +93,8 @@ class App extends React.Component{
     })
     return(
       <div className="App">
+        <button onClick={() => this.getFundDatas()}>刷新</button>
+        <hr/>
         <table border="1">
           <thead>
             <tr>
