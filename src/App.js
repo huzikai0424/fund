@@ -24,7 +24,7 @@ class App extends React.Component{
       showList:[]
     })
     this.state.fundData.forEach(item => {
-      this.jsonp(`http://fundgz.1234567.com.cn/js/${item.id}.js?rt=${new Date().getTime()}`)
+      this.jsonp(`https://fundgz.1234567.com.cn/js/${item.id}.js?rt=${new Date().getTime()}`)
     })
     this.timeCut(reload)
   }
@@ -114,11 +114,14 @@ class App extends React.Component{
    */
   importJson() {
     const { inputJson } = this.state
+    if (!inputJson) {
+      return
+    }
     const jsonData = JSON.parse(JSON.parse(inputJson))
     this.setState({
       fundData:jsonData
     }, () => {
-      this.getFundDatas()
+      this.getFundDatas(true)
       this.saveToLocalStorage()
     })
   }
