@@ -35,6 +35,7 @@ class App extends React.Component{
       e.currentTarget.remove()
     }
     window[jsonpCallback] = data => {
+      if(!data) {return}
       const { showList, fundData } = this.state
       const config = fundData.find((item) => item.id === data.fundcode)
       if (!config) {
@@ -126,7 +127,10 @@ class App extends React.Component{
     let _today = 0
     let _all = 0
     let _allMoney = 0
-    const _showList = showList.map((item) => {
+    let showList_sort = showList.sort((a,b) => {
+      return Number(b.fundcode) - Number(a.fundcode)
+    })
+    const _showList = showList_sort.map((item) => {
       const isRed = item.dwjz <= item.gsz ? 'red' : 'green'
       const own = fundData.find((item2) => item2.id === item.fundcode) || {num:0,money:0}
       const today = (item.dwjz * own.num * item.gszzl / 100).toFixed(2)
