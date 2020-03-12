@@ -1,6 +1,7 @@
 import React from 'react';
 import './App.css';
 import ClipboardJS from 'clipboard'
+import classnames from 'classnames'
 class App extends React.Component{
   constructor(props) {
     super(props)
@@ -10,23 +11,22 @@ class App extends React.Component{
       today: 0,
       all: 0,
       addItem: {},
-      inputJson:''
+      inputJson: '',
+      timeCut:120
     }
   }
   componentDidMount() {
     new ClipboardJS('#saveJSON')
     this.getFundDatas()
-    setInterval(() => {
-      this.getFundDatas()
-    },2*60*1000)
   }
-  getFundDatas() {
+  getFundDatas(reload = false) {
     this.setState({
       showList:[]
     })
     this.state.fundData.forEach(item => {
       this.jsonp(`http://fundgz.1234567.com.cn/js/${item.id}.js?rt=${new Date().getTime()}`)
     })
+    this.timeCut(reload)
   }
   jsonp(url, jsonpCallback = 'jsonpgz') {
     const script = document.createElement('script')
@@ -121,8 +121,34 @@ class App extends React.Component{
       this.saveToLocalStorage()
     })
   }
+  /**
+   * 倒计时
+   * @param {*} reload | 是否重置倒计时
+   */
+  timeCut(reload = false) {
+    if (reload) {
+      this.setState({
+        timeCut:120
+      })
+      return
+    }
+    let { timeCut } = this.state
+    this.setState({
+      timeCut:timeCut-1
+    })
+    if (timeCut > 1) {
+      setTimeout(() => {
+        this.timeCut()
+      },1000)
+    } else {
+      this.setState({
+        timeCut:120
+      })
+      this.getFundDatas()
+    }
+  }
   render() {
-    const { showList, fundData,addItem,inputJson } = this.state
+    const { showList, fundData,addItem,inputJson,timeCut } = this.state
     let _today = 0
     let _all = 0
     let _allMoney = 0
@@ -181,9 +207,9 @@ class App extends React.Component{
             <tr>
               <th colSpan={6}></th>
               <th>{_allMoney}</th>
-              <th className={_today > 0 ? 'red' : 'green'}>￥{_today.toFixed(2)}</th>
-              <th className={_all > 0 ? 'red' : 'green'}>￥{_all.toFixed(2)}</th>
-              <th></th>
+              <th className={classnames(_today > 0 ? 'red' : 'green','tooltip')} data-percentage={`${(_today/_allMoney*100).toFixed(2)}%`}>￥{_today.toFixed(2)}</th>
+              <th className={classnames(_all > 0 ? 'red' : 'green','tooltip')} data-percentage={`${(_all/_allMoney*100).toFixed(2)}%`}>￥{_all.toFixed(2)}</th>
+              <th>{`${timeCut}秒后刷新`}</th>
               <th></th>
             </tr>
           </tfoot>
@@ -195,7 +221,7 @@ class App extends React.Component{
         <div id='saveJSON' className='btn' data-clipboard-text={JSON.stringify(localStorage.getItem('fund'))} onClick={()=>alert('复制成功')}>
           保存数据
         </div>
-        <div className='btn blue'  onClick={() => this.getFundDatas()}>刷新</div>
+        <div className='btn blue'  onClick={() => this.getFundDatas(true)}>刷新</div>
       </div>
     );
   }
