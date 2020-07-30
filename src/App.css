@@ -27,8 +27,17 @@ table>thead>tr{
 .green{
   color:#008000;
 }
+.green.update{
+  background: rgba(0,128,0,0.2);
+}
 .red{
   color:#ff0000;
+}
+.red.update{
+  background: rgba(255,0,0,0.2);
+}
+.time.update{
+  background: rgba(135,206,250,0.5);
 }
 .btn{
   width: 50px;
@@ -99,7 +108,45 @@ tfoot tr{
   border-radius: 4px;
   transition: all .1s ease-out .1s;
 }
+.handle{
+  cursor: grab;
+}
+.handle:focus{
+  color: grabbing;
+}
+.selected{
+  cursor: grabbing;
+  /* background: #5f9edf; */
+  background: #fff;
+}
+.ghost{
+  opacity: 0;
+}
+tbody>tr{
+  background: #fff;
+  height: 32px;
+}
 
 table tfoot{
   position: relative;
+}
+.boardList .board {
+  padding: 10px;
+  display: inline-block;
+  border-radius: 5px;
+  margin-right:10px;
+  text-align: center;
+}
+.boardList .board .boardName{
+  color:#000;
+  font-weight: bold;
+}
+.boardList .board .change{
+  font-size: 12px;
+}
+.boardList .board.green {
+  background: rgba(0, 128, 0, 0.2);
+}
+.boardList .board.red {
+  background: rgba(255,0,0,0.2);
 }
